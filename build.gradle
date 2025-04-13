@@ -83,20 +83,20 @@ publishing {
 
 tasks.register('autoGitPush') {
     doLast {
-        println '📦 Добавляем файлы в Git...'
+        println '📦 Git add...'
         "git add .".execute().waitFor()
 
         def status = "git status --porcelain".execute().text.trim()
         if (!status.isEmpty()) {
-            println '📝 Коммитим изменения...'
-            "git commit -m \"Автокоммит после билда\"".execute().waitFor()
+            println '📝 Git commit...'
+            "git commit -m \"Auto commit after build\"".execute().waitFor()
         } else {
-            println '✅ Нет изменений для коммита.'
+            println '✅ No changes to commit.'
         }
 
-        println '🚀 Пушим в GitHub...'
+        println '🚀 Git push...'
         "git push origin HEAD".execute().waitFor()
     }
 }
 
-build.finalizedBy 'autoGitPush'
+build.finalizedBy('autoGitPush')
