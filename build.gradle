@@ -100,3 +100,24 @@ tasks.register('autoGitPush') {
 }
 
 build.finalizedBy('autoGitPush')
+
+task autoGitPushOnFailure {
+    doLast {
+        def logFile = file("build-error.log") // сохраняем в корне, а не в build/
+
+        try {
+            exec {
+                commandLine './gradlew', 'build'
+            }
+        } catch (Exception e) {
+            // сохраняем лог ошибки
+            logFile.text = "Build failed: ${e.message}\n\n${e.getStackTrace().join('\n')}"
+
+            // git commit + push
+            exec { commandLine 'git', 'add', '.' }
+            exec { commandLine 'git', 'add', logFile.path }
+            exec { commandLine 'git', 'commit', '-m', "❌ Build failed: ${new Date().format("yyyy-MM-dd HH:mm:ss")}" }
+            exec { commandLine 'git', 'push' }
+        }
+    }
+}

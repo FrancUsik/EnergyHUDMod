@@ -1,0 +1,13 @@
+Build failed: A problem occurred starting process 'command './gradlew''
+
+org.gradle.process.internal.DefaultExecHandle.execExceptionFor(DefaultExecHandle.java:231)
+org.gradle.process.internal.DefaultExecHandle.setEndStateInfo(DefaultExecHandle.java:209)
+org.gradle.process.internal.DefaultExecHandle.failed(DefaultExecHandle.java:355)
+org.gradle.process.internal.ExecHandleRunner.run(ExecHandleRunner.java:85)
+org.gradle.internal.operations.CurrentBuildOperationPreservingRunnable.run(CurrentBuildOperationPreservingRunnable.java:42)
+org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:63)
+org.gradle.internal.concurrent.ManagedExecutorImpl$1.run(ManagedExecutorImpl.java:46)
+java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable.run(ThreadFactoryImpl.java:55)
+java.lang.Thread.run(Thread.java:750)
