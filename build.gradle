@@ -80,3 +80,23 @@ publishing {
         }
     }
 }
+
+tasks.register('autoGitPush') {
+    doLast {
+        println '📦 Добавляем файлы в Git...'
+        "git add .".execute().waitFor()
+
+        def status = "git status --porcelain".execute().text.trim()
+        if (!status.isEmpty()) {
+            println '📝 Коммитим изменения...'
+            "git commit -m \"Автокоммит после билда\"".execute().waitFor()
+        } else {
+            println '✅ Нет изменений для коммита.'
+        }
+
+        println '🚀 Пушим в GitHub...'
+        "git push origin HEAD".execute().waitFor()
+    }
+}
+
+build.finalizedBy 'autoGitPush'
