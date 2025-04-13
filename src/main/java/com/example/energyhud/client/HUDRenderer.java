@@ -1,4 +1,4 @@
-package com.example.energyhud.client;
+package com.eximple.energyhud.client;
 
 import com.example.energyhud.network.ClientEnergyCache;
 import com.example.energyhud.network.PacketHandler;
@@ -9,7 +9,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
