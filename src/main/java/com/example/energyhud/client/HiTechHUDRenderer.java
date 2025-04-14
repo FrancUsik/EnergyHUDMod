@@ -49,44 +49,53 @@ public class HiTechHUDRenderer {
         ScaledResolution res = new ScaledResolution(mc);
         int centerX = res.getScaledWidth() / 2;
         int topY = 10;
-        int leftX = centerX - 128;
+        int leftX = centerX - 64; // 128 / 2
 
-        // Draw HUD background
+        // HUD background (128x64)
         mc.getTextureManager().bindTexture(HUD_BACKGROUND);
+        GlStateManager.enableBlend(); // поддержка альфа
         GlStateManager.color(1f, 1f, 1f, 1f);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 128, 64, 128, 64);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Draw HUD frame
+        // Frame overlay
         mc.getTextureManager().bindTexture(HUD_FRAME);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 128, 64, 128, 64);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Energy icon and text
-        drawIcon(ICON_ENERGY, leftX + 10, topY, 16, 64);
-        mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 32, topY + 4, 0x00FFFF);
+        // ICON ENERGY (16x16)
+        drawIcon(ICON_ENERGY, leftX + 6, topY + 6);
+        mc.fontRenderer.drawStringWithShadow(
+                formatNumber(energy) + " / " + formatNumber(max) + " RF",
+                leftX + 26, topY + 9, 0x00FFFF
+        );
 
-        // Delta icon and text
-        drawIcon(ICON_DELTA, leftX + 10, topY + 24, 16, 64);
+        // ICON DELTA (16x16)
+        drawIcon(ICON_DELTA, leftX + 6, topY + 26);
         String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
-        int deltaColor = delta > 0 ? 0x55FF55 : 0xFF5555;
-        mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 32, topY + 28, deltaColor);
+        mc.fontRenderer.drawStringWithShadow(
+                deltaText,
+                leftX + 26, topY + 29,
+                delta > 0 ? 0x55FF55 : 0xFF5555
+        );
+
+        GlStateManager.disableBlend(); // отключить после отрисовки
     }
 
-    // Properly scale 64x64 icon down to 16x16
-    private void drawIcon(ResourceLocation texture, int x, int y, int drawSize, int textureSize) {
+    private void drawIcon(ResourceLocation texture, int x, int y) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+        GlStateManager.enableBlend(); // нужно для альфа-канала
         GlStateManager.color(1f, 1f, 1f, 1f);
         Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
                 x, y,
                 0, 0,
-                drawSize, drawSize,
-                textureSize, textureSize
+                16, 16,
+                64, 64
         );
     }
 
     private String formatNumber(double value) {
         String[] suffixes = {"", "k", "M", "G", "T"};
         int index = 0;
-        while (value >= 1000 && index < suffixes.length - 1) {
+        while (Math.abs(value) >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
             index++;
         }
