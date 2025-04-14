@@ -53,24 +53,24 @@ public class HiTechHUDRenderer {
         int padding = 6;
 
         int leftX = centerX - 90;
-        int iconX = leftX;
-        int textX = iconX + iconSize + padding;
+        int textX = leftX + iconSize + padding;
 
-        int iconY1 = topY;
-        int iconY2 = topY + iconSize + 8;
-
-        // Draw energy icon and text
-        drawIcon(ICON_ENERGY, iconX, iconY1, iconSize, textureSize);
+        // ===== ENERGY =====
+        int y1 = topY;
+        drawIcon(ICON_ENERGY, leftX, y1, iconSize, textureSize);
         mc.fontRenderer.drawStringWithShadow(
                 formatNumber(energy) + " / " + formatNumber(max) + " RF",
-                textX, iconY1 + 4, 0x00FFFF
+                textX, y1 + (iconSize / 2 - 4), 0x00FFFF
         );
 
-        // Draw delta icon and text
-        drawIcon(ICON_DELTA, iconX, iconY2, iconSize, textureSize);
-        String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
+        // ===== DELTA =====
+        int y2 = y1 + iconSize + 8;
+        drawIcon(ICON_DELTA, leftX, y2, iconSize, textureSize);
+        String deltaText = String.format("Δ: %s RF/s", formatNumber(delta));
         int deltaColor = delta > 0 ? 0x55FF55 : delta < 0 ? 0xFF5555 : 0xAAAAAA;
-        mc.fontRenderer.drawStringWithShadow(deltaText, textX, iconY2 + 4, deltaColor);
+        mc.fontRenderer.drawStringWithShadow(
+                deltaText, textX, y2 + (iconSize / 2 - 4), deltaColor
+        );
     }
 
     private void drawIcon(ResourceLocation texture, int x, int y, int drawSize, int textureSize) {
@@ -84,7 +84,7 @@ public class HiTechHUDRenderer {
     private String formatNumber(double value) {
         String[] suffixes = {"", "k", "M", "G", "T"};
         int index = 0;
-        while (value >= 1000 && index < suffixes.length - 1) {
+        while (Math.abs(value) >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
             index++;
         }
