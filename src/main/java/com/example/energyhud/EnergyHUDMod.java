@@ -13,11 +13,11 @@ public class EnergyHUDMod {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        PacketHandler.registerPackets();
+        PacketHandler.registerPackets(); // 📡 Регистрируем пакеты
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        MinecraftForge.EVENT_BUS.register(new HiTechHUDRenderer());
+        MinecraftForge.EVENT_BUS.register(new HiTechHUDRenderer()); // 🚀 Подключаем HiTech HUD
     }
 }
