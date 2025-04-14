@@ -15,8 +15,8 @@ public class HiTechHUDRenderer {
 
     private static final ResourceLocation ICON_ENERGY = new ResourceLocation("energyhud", "textures/gui/icon_energy.png");
     private static final ResourceLocation ICON_DELTA = new ResourceLocation("energyhud", "textures/gui/icon_delta.png");
-    private static final ResourceLocation HUD_FRAME = new ResourceLocation("energyhud", "textures/gui/frame.png");
     private static final ResourceLocation HUD_BACKGROUND = new ResourceLocation("energyhud", "textures/gui/hud_hitech.png");
+    private static final ResourceLocation HUD_FRAME = new ResourceLocation("energyhud", "textures/gui/frame.png");
 
     private double lastEnergy = -1;
     private long lastUpdate = 0;
@@ -47,49 +47,48 @@ public class HiTechHUDRenderer {
         lastEnergy = energy;
 
         ScaledResolution res = new ScaledResolution(mc);
-        int centerX = res.getScaledWidth() / 2;
+        int leftX = res.getScaledWidth() / 2 - 64;
         int topY = 10;
-        int leftX = centerX - 64; // центр по 128x64
-
-        // ICON ENERGY (точно 16x16 без масштабов)
-        drawIconExact(ICON_ENERGY, leftX + 6, topY + 6);
-        mc.fontRenderer.drawStringWithShadow(
-                formatNumber(energy) + " / " + formatNumber(max) + " RF",
-                leftX + 26, topY + 9, 0x00FFFF
-        );
-
-        // ICON DELTA
-        drawIconExact(ICON_DELTA, leftX + 6, topY + 26);
-        String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
-        mc.fontRenderer.drawStringWithShadow(
-                deltaText,
-                leftX + 26, topY + 29,
-                delta > 0 ? 0x55FF55 : 0xFF5555
-        );
 
         // HUD background
         mc.getTextureManager().bindTexture(HUD_BACKGROUND);
         GlStateManager.color(1f, 1f, 1f, 1f);
         mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Frame overlay
+        // Frame
         mc.getTextureManager().bindTexture(HUD_FRAME);
         mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
+        // ICON ENERGY
+        drawIcon16x16(ICON_ENERGY, leftX + 6, topY + 6);
+        mc.fontRenderer.drawStringWithShadow(
+                formatNumber(energy) + " / " + formatNumber(max) + " RF",
+                leftX + 26, topY + 9, 0x00FFFF
+        );
+
+        // ICON DELTA
+        drawIcon16x16(ICON_DELTA, leftX + 6, topY + 26);
+        String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
+        mc.fontRenderer.drawStringWithShadow(
+                deltaText,
+                leftX + 26, topY + 29,
+                delta > 0 ? 0x55FF55 : 0xFF5555
+        );
     }
 
-    // ОТРИСОВКА PNG 16x16 без масштабирования
-    private void drawIconExact(ResourceLocation texture, int x, int y) {
+    // 1:1 отрисовка 16x16 иконок
+    private void drawIcon16x16(ResourceLocation texture, int x, int y) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        GlStateManager.enableBlend();
         GlStateManager.color(1f, 1f, 1f, 1f);
-        Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect(x, y, 0, 0, 16, 16);
+        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
+                x, y, 0, 0, 16, 16, 16, 16
+        );
     }
 
     private String formatNumber(double value) {
         String[] suffixes = {"", "k", "M", "G"};
         int index = 0;
-        while (Math.abs(value) >= 1000 && index < suffixes.length - 1) {
+        while (value >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
             index++;
         }
