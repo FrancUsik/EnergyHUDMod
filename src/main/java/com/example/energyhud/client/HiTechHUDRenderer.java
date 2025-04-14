@@ -55,7 +55,7 @@ public class HiTechHUDRenderer {
         // HUD background
         mc.getTextureManager().bindTexture(HUD_BACKGROUND);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 64, 256, 64);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
 
         // Frame (optional overlay)
         mc.getTextureManager().bindTexture(HUD_FRAME);
