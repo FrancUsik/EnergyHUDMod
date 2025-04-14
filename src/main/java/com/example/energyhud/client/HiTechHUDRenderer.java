@@ -10,9 +10,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
-
-import java.util.LinkedList;
 
 public class HiTechHUDRenderer {
 
@@ -20,18 +17,11 @@ public class HiTechHUDRenderer {
     private static final ResourceLocation ICON_DELTA = new ResourceLocation("energyhud", "textures/gui/icon_delta.png");
     private static final ResourceLocation HUD_FRAME = new ResourceLocation("energyhud", "textures/gui/frame.png");
     private static final ResourceLocation HUD_BACKGROUND = new ResourceLocation("energyhud", "textures/gui/hud_hitech.png");
-    private static final ResourceLocation HUD_GRAPH = new ResourceLocation("energyhud", "textures/gui/energy_graph.png");
-
-    private static final int HUD_WIDTH = 128;
-    private static final int HUD_HEIGHT = 64;
 
     private double lastEnergy = -1;
     private double displayedDelta = 0;
-    private long lastDeltaUpdate = 0;
-    private final long deltaUpdateInterval = 250;
-
-    private final LinkedList<Double> deltaHistory = new LinkedList<>();
-    private final int historySize = 40;
+    private long lastUpdate = 0;
+    private long lastDeltaCalcTime = 0;
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
@@ -48,33 +38,36 @@ public class HiTechHUDRenderer {
         double energy = data.energy;
         double max = data.maxEnergy;
 
-        // delta calculation with interpolation
         long now = System.currentTimeMillis();
-        if (lastEnergy >= 0) {
-            double dt = (now - lastDeltaUpdate) / 1000.0;
-            if (now - lastDeltaUpdate >= deltaUpdateInterval) {
-                double rawDelta = (energy - lastEnergy) / Math.max(dt, 0.01);
-                displayedDelta += (rawDelta - displayedDelta) * 0.25; // interpolate
-                lastDeltaUpdate = now;
 
-                // update history
-                if (deltaHistory.size() >= historySize) deltaHistory.removeFirst();
-                deltaHistory.add(displayedDelta);
+        // Обновляем дельту раз в 250 мс
+        if (now - lastDeltaCalcTime >= 250) {
+            if (lastUpdate > 0) {
+                double dt = (now - lastUpdate) / 1000.0;
+                double targetDelta = (energy - lastEnergy) / Math.max(dt, 0.001);
+                // Интерполяция дельты
+                displayedDelta = lerp(displayedDelta, targetDelta, 0.25);
             }
+            lastDeltaCalcTime = now;
         }
+
+        lastUpdate = now;
         lastEnergy = energy;
 
+        // Рендер
         ScaledResolution res = new ScaledResolution(mc);
-        int leftX = res.getScaledWidth() / 2 - HUD_WIDTH / 2;
+        int centerX = res.getScaledWidth() / 2;
         int topY = 10;
+        int leftX = centerX - 64;
 
-        // Background
+        // HUD background
         mc.getTextureManager().bindTexture(HUD_BACKGROUND);
-        drawTexturedRect(leftX, topY, HUD_WIDTH, HUD_HEIGHT, HUD_WIDTH, HUD_HEIGHT);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Frame
+        // Frame overlay
         mc.getTextureManager().bindTexture(HUD_FRAME);
-        drawTexturedRect(leftX, topY, HUD_WIDTH, HUD_HEIGHT, HUD_WIDTH, HUD_HEIGHT);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
         // ICON ENERGY
         drawIconExact(ICON_ENERGY, leftX + 6, topY + 6);
@@ -86,58 +79,32 @@ public class HiTechHUDRenderer {
         // ICON DELTA
         drawIconExact(ICON_DELTA, leftX + 6, topY + 26);
         String deltaText = "Δ: " + formatNumber(displayedDelta) + " RF/s";
-        int color = displayedDelta > 0.01 ? 0x55FF55 : displayedDelta < -0.01 ? 0xFF5555 : 0xAAAAAA;
-        mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 26, topY + 29, color);
-
-        // Graph on Shift
-        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-            mc.getTextureManager().bindTexture(HUD_GRAPH);
-            drawGraph(leftX + 8, topY + 48, 112, 10);
-        }
-    }
-
-    private void drawTexturedRect(int x, int y, int w, int h, int texW, int texH) {
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(x, y, 0, 0, w, h, texW, texH);
+        mc.fontRenderer.drawStringWithShadow(
+                deltaText,
+                leftX + 26, topY + 29,
+                displayedDelta > 0 ? 0x55FF55 : (displayedDelta < 0 ? 0xFF5555 : 0xAAAAAA)
+        );
     }
 
     private void drawIconExact(ResourceLocation texture, int x, int y) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        drawTexturedRect(x, y, 16, 16, 16, 16);
-    }
-
-    private void drawGraph(int x, int y, int width, int height) {
-        if (deltaHistory.isEmpty()) return;
-        GlStateManager.disableTexture2D();
-        GlStateManager.color(0f, 1f, 0f, 1f);
-        double max = deltaHistory.stream().mapToDouble(Math::abs).max().orElse(1);
-        for (int i = 0; i < deltaHistory.size() - 1; i++) {
-            double val1 = deltaHistory.get(i) / max;
-            double val2 = deltaHistory.get(i + 1) / max;
-            int x1 = x + i * width / historySize;
-            int x2 = x + (i + 1) * width / historySize;
-            int y1 = y + height / 2 - (int)(val1 * height / 2);
-            int y2 = y + height / 2 - (int)(val2 * height / 2);
-            drawLine(x1, y1, x2, y2);
-        }
-        GlStateManager.enableTexture2D();
-    }
-
-    private void drawLine(int x1, int y1, int x2, int y2) {
-        GlStateManager.glBegin(1); // GL_LINES
-        GlStateManager.glVertex3f(x1, y1, 0);
-        GlStateManager.glVertex3f(x2, y2, 0);
-        GlStateManager.glEnd();
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
+                x, y, 0, 0, 16, 16, 16, 16
+        );
     }
 
     private String formatNumber(double value) {
         String[] suffixes = {"", "k", "M", "G"};
         int index = 0;
-        value = Math.abs(value);
-        while (value >= 1000 && index < suffixes.length - 1) {
+        while (Math.abs(value) >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
             index++;
         }
         return String.format("%.2f %s", value, suffixes[index]);
+    }
+
+    private double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
     }
 }
