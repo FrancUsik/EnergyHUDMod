@@ -1,19 +1,17 @@
 package com.francusik.energyhud;
 
 import com.francusik.energyhud.client.HiTechHUDRenderer;
-import mekanism.common.capabilities.Capabilities;
-import mekanism.common.util.MekanismUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 
 @Mod(modid = EnergyHUDMod.MODID, name = EnergyHUDMod.NAME, version = EnergyHUDMod.VERSION)
@@ -43,7 +41,7 @@ public class EnergyHUDMod {
         TileEntity tile = mc.world.getTileEntity(mc.objectMouseOver.getBlockPos());
         if (tile == null) return;
 
-        IEnergyStorage energyStorage = tile.getCapability(Capabilities.ELECTRICITY_CAPABILITY, null);
+        IEnergyStorage energyStorage = tile.getCapability(CapabilityEnergy.ENERGY, null);
         if (energyStorage == null) return;
 
         float currentEnergy = energyStorage.getEnergyStored();
