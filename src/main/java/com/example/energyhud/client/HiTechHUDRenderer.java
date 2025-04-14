@@ -1,4 +1,3 @@
-
 package com.example.energyhud.client;
 
 import com.example.energyhud.network.ClientEnergyCache;
@@ -49,14 +48,29 @@ public class HiTechHUDRenderer {
         int centerX = res.getScaledWidth() / 2;
         int topY = 10;
 
+        int iconSize = 16;
+        int textureSize = 64;
+        int padding = 6;
+
         int leftX = centerX - 90;
+        int iconX = leftX;
+        int textX = iconX + iconSize + padding;
 
-        drawIcon(ICON_ENERGY, leftX, topY, 16, 64);
-        mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 20, topY + 4, 0x00FFFF);
+        int iconY1 = topY;
+        int iconY2 = topY + iconSize + 8;
 
-        drawIcon(ICON_DELTA, leftX, topY + 20, 16, 64);
+        // Draw energy icon and text
+        drawIcon(ICON_ENERGY, iconX, iconY1, iconSize, textureSize);
+        mc.fontRenderer.drawStringWithShadow(
+                formatNumber(energy) + " / " + formatNumber(max) + " RF",
+                textX, iconY1 + 4, 0x00FFFF
+        );
+
+        // Draw delta icon and text
+        drawIcon(ICON_DELTA, iconX, iconY2, iconSize, textureSize);
         String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
-        mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 20, topY + 24, delta > 0 ? 0x55FF55 : 0xFF5555);
+        int deltaColor = delta > 0 ? 0x55FF55 : delta < 0 ? 0xFF5555 : 0xAAAAAA;
+        mc.fontRenderer.drawStringWithShadow(deltaText, textX, iconY2 + 4, deltaColor);
     }
 
     private void drawIcon(ResourceLocation texture, int x, int y, int drawSize, int textureSize) {
@@ -68,7 +82,7 @@ public class HiTechHUDRenderer {
     }
 
     private String formatNumber(double value) {
-        String[] suffixes = {"", "k", "M", "G"};
+        String[] suffixes = {"", "k", "M", "G", "T"};
         int index = 0;
         while (value >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
