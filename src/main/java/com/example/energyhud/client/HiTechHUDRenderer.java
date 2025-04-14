@@ -1,4 +1,3 @@
-
 package com.example.energyhud.client;
 
 import com.example.energyhud.network.ClientEnergyCache;
@@ -57,24 +56,30 @@ public class HiTechHUDRenderer {
         GlStateManager.color(1f, 1f, 1f, 1f);
         mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
 
-        // Frame (optional overlay)
+        // HUD frame overlay
         mc.getTextureManager().bindTexture(HUD_FRAME);
         mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
 
-        // Energy Icon and Text
-        drawIcon(ICON_ENERGY, leftX + 10, topY, 64, 64);
-        mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 30, topY + 4, 0x00FFFF);
+        // ENERGY ICON
+        drawIcon(ICON_ENERGY, leftX + 10, topY);
+        mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 32, topY + 4, 0x00FFFF);
 
-        // Delta Icon and Text
-        drawIcon(ICON_DELTA, leftX + 10, topY + 24, 64, 64);
+        // DELTA ICON
+        drawIcon(ICON_DELTA, leftX + 10, topY + 24);
         String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
-        mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 30, topY + 28, delta > 0 ? 0x55FF55 : 0xFF5555);
+        int deltaColor = delta > 0 ? 0x55FF55 : 0xFF5555;
+        mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 32, topY + 28, deltaColor);
     }
 
-    private void drawIcon(ResourceLocation texture, int x, int y, int drawSize, int textureSize) {
+    private void drawIcon(ResourceLocation texture, int x, int y) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(x, y, 0, 0, drawSize, drawSize, textureSize, textureSize);
+        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
+                x, y,
+                0, 0,
+                16, 16, // отображаем как 16x16
+                64, 64  // оригинальный размер текстуры
+        );
     }
 
     private String formatNumber(double value) {
