@@ -51,15 +51,6 @@ public class HiTechHUDRenderer {
         int topY = 10;
         int leftX = centerX - 64; // центр по 128x64
 
-        // HUD background
-        mc.getTextureManager().bindTexture(HUD_BACKGROUND);
-        GlStateManager.color(1f, 1f, 1f, 1f);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
-
-        // Frame overlay
-        mc.getTextureManager().bindTexture(HUD_FRAME);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
-
         // ICON ENERGY (точно 16x16 без масштабов)
         drawIconExact(ICON_ENERGY, leftX + 6, topY + 6);
         mc.fontRenderer.drawStringWithShadow(
@@ -75,6 +66,16 @@ public class HiTechHUDRenderer {
                 leftX + 26, topY + 29,
                 delta > 0 ? 0x55FF55 : 0xFF5555
         );
+
+        // HUD background
+        mc.getTextureManager().bindTexture(HUD_BACKGROUND);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
+
+        // Frame overlay
+        mc.getTextureManager().bindTexture(HUD_FRAME);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
+
     }
 
     // ОТРИСОВКА PNG 16x16 без масштабирования
