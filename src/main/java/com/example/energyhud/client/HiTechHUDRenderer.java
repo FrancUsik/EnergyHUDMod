@@ -1,121 +1,97 @@
-package com.francusik.energyhud.client;
+package com.example.energyhud.client;
 
+import com.example.energyhud.network.ClientEnergyCache;
+import com.example.energyhud.network.PacketHandler;
+import com.example.energyhud.network.PacketRequestEnergy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
-
-import java.text.DecimalFormat;
-import java.util.List;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class HiTechHUDRenderer {
-    private static final ResourceLocation HUD_TEXTURE = new ResourceLocation("energyhud", "textures/gui/hud_hitech.png");
-    private static final ResourceLocation FRAME_TEXTURE = new ResourceLocation("energyhud", "textures/gui/frame.png");
+
     private static final ResourceLocation ICON_ENERGY = new ResourceLocation("energyhud", "textures/gui/icon_energy.png");
     private static final ResourceLocation ICON_DELTA = new ResourceLocation("energyhud", "textures/gui/icon_delta.png");
+    private static final ResourceLocation HUD_BACKGROUND = new ResourceLocation("energyhud", "textures/gui/hud_hitech.png");
+    private static final ResourceLocation HUD_FRAME = new ResourceLocation("energyhud", "textures/gui/frame.png");
 
-    private static final DecimalFormat FORMAT = new DecimalFormat("#,##0.00");
+    private double lastEnergy = -1;
+    private long lastUpdate = 0;
+    private double delta = 0;
 
-    public static void renderHUD(float currentEnergy, float maxEnergy, float deltaRF, List<Float> history) {
+    @SubscribeEvent
+    public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
+        if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
+
         Minecraft mc = Minecraft.getMinecraft();
+        if (mc.objectMouseOver == null || mc.objectMouseOver.getBlockPos() == null || mc.world == null) return;
+
+        BlockPos pos = mc.objectMouseOver.getBlockPos();
+        PacketHandler.INSTANCE.sendToServer(new PacketRequestEnergy(pos));
+        ClientEnergyCache.EnergyData data = ClientEnergyCache.get(pos);
+        if (data == null || data.maxEnergy <= 0) return;
+
+        double energy = data.energy;
+        double max = data.maxEnergy;
+
+        long now = System.currentTimeMillis();
+        if (lastUpdate != 0) {
+            double dt = (now - lastUpdate) / 1000.0;
+            double newDelta = (energy - lastEnergy) / Math.max(dt, 0.01);
+            if (Math.abs(newDelta) > 0.01) delta = newDelta;
+        }
+        lastUpdate = now;
+        lastEnergy = energy;
+
         ScaledResolution res = new ScaledResolution(mc);
-
-        int hudWidth = 128;
-        int hudHeight = 64;
-
-        int x = res.getScaledWidth() / 2 - hudWidth / 2;
-        int y = 10;
-
-        GlStateManager.pushMatrix();
-        GlStateManager.enableBlend();
-        GlStateManager.disableLighting();
+        int leftX = res.getScaledWidth() / 2 - 64;
+        int topY = 10;
 
         // HUD background
-        mc.getTextureManager().bindTexture(HUD_TEXTURE);
-        drawTexturedRect(x, y, hudWidth, hudHeight, 0, 0, 128, 64);
+        mc.getTextureManager().bindTexture(HUD_BACKGROUND);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Frame overlay
-        mc.getTextureManager().bindTexture(FRAME_TEXTURE);
-        drawTexturedRect(x, y, hudWidth, hudHeight, 0, 0, 128, 64);
+        // Frame
+        mc.getTextureManager().bindTexture(HUD_FRAME);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY, 0, 0, 128, 64, 128, 64);
 
-        // Icon: Energy
-        mc.getTextureManager().bindTexture(ICON_ENERGY);
-        drawTexturedRect(x + 6, y + 6, 16, 16, 0, 0, 16, 16);
+        // ICON ENERGY
+        drawIcon16x16(ICON_ENERGY, leftX + 6, topY + 6);
+        mc.fontRenderer.drawStringWithShadow(
+                formatNumber(energy) + " / " + formatNumber(max) + " RF",
+                leftX + 26, topY + 9, 0x00FFFF
+        );
 
-        // Icon: Delta
-        mc.getTextureManager().bindTexture(ICON_DELTA);
-        drawTexturedRect(x + 6, y + 28, 16, 16, 0, 0, 16, 16);
+        // ICON DELTA
+        drawIcon16x16(ICON_DELTA, leftX + 6, topY + 26);
+        String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
+        mc.fontRenderer.drawStringWithShadow(
+                deltaText,
+                leftX + 26, topY + 29,
+                delta > 0 ? 0x55FF55 : 0xFF5555
+        );
+    }
 
-        // Energy text
-        String energyStr = FORMAT.format(currentEnergy) + " / " + FORMAT.format(maxEnergy) + " RF";
-        mc.fontRenderer.drawStringWithShadow(energyStr, x + 26, y + 10, 0x00FFFF);
+    // 1:1 отрисовка 16x16 иконок
+    private void drawIcon16x16(ResourceLocation texture, int x, int y) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
+                x, y, 0, 0, 16, 16, 16, 16
+        );
+    }
 
-        // Delta text
-        String deltaStr = (deltaRF >= 0 ? "+" : "") + FORMAT.format(deltaRF) + " RF/s";
-        int deltaColor = deltaRF > 0 ? 0x00FF00 : deltaRF < 0 ? 0xFF5555 : 0xAAAAAA;
-        mc.fontRenderer.drawStringWithShadow(deltaStr, x + 26, y + 32, deltaColor);
-
-        // Energy progress bar (gradient)
-        float percent = Math.min(currentEnergy / maxEnergy, 1.0f);
-        int barWidth = (int) (percent * (hudWidth - 12));
-        drawGradientBar(x + 6, y + 54, barWidth, 6, 0xFF00FF00, 0xFF0099FF);
-
-        // Shift: draw history graph
-        if (Minecraft.getMinecraft().gameSettings.keyBindSneak.isKeyDown() && history != null && history.size() > 1) {
-            drawHistoryGraph(x + 6, y + 64, 116, 20, history);
+    private String formatNumber(double value) {
+        String[] suffixes = {"", "k", "M", "G"};
+        int index = 0;
+        while (value >= 1000 && index < suffixes.length - 1) {
+            value /= 1000;
+            index++;
         }
-
-        GlStateManager.popMatrix();
-    }
-
-    private static void drawTexturedRect(int x, int y, int width, int height, int u, int v, int texW, int texH) {
-        Tessellator tessellator = Tessellator.getInstance();
-        GL11.glColor4f(1F, 1F, 1F, 1F);
-        tessellator.getBuffer().begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        tessellator.getBuffer().pos(x, y + height, 0).tex(0, 1).endVertex();
-        tessellator.getBuffer().pos(x + width, y + height, 0).tex(1, 1).endVertex();
-        tessellator.getBuffer().pos(x + width, y, 0).tex(1, 0).endVertex();
-        tessellator.getBuffer().pos(x, y, 0).tex(0, 0).endVertex();
-        tessellator.draw();
-    }
-
-    private static void drawGradientBar(int x, int y, int width, int height, int colorStart, int colorEnd) {
-        Tessellator tessellator = Tessellator.getInstance();
-        tessellator.getBuffer().begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-
-        int a1 = (colorStart >> 24) & 0xFF;
-        int r1 = (colorStart >> 16) & 0xFF;
-        int g1 = (colorStart >> 8) & 0xFF;
-        int b1 = colorStart & 0xFF;
-
-        int a2 = (colorEnd >> 24) & 0xFF;
-        int r2 = (colorEnd >> 16) & 0xFF;
-        int g2 = (colorEnd >> 8) & 0xFF;
-        int b2 = colorEnd & 0xFF;
-
-        tessellator.getBuffer().pos(x, y + height, 0).color(r1, g1, b1, a1).endVertex();
-        tessellator.getBuffer().pos(x + width, y + height, 0).color(r2, g2, b2, a2).endVertex();
-        tessellator.getBuffer().pos(x + width, y, 0).color(r2, g2, b2, a2).endVertex();
-        tessellator.getBuffer().pos(x, y, 0).color(r1, g1, b1, a1).endVertex();
-
-        tessellator.draw();
-    }
-
-    private static void drawHistoryGraph(int x, int y, int width, int height, List<Float> history) {
-        if (history.isEmpty()) return;
-        Tessellator tessellator = Tessellator.getInstance();
-        tessellator.getBuffer().begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-
-        for (int i = 0; i < history.size(); i++) {
-            float value = history.get(i);
-            float px = x + (i / (float) history.size()) * width;
-            float py = y + height - (value * height);
-            tessellator.getBuffer().pos(px, py, 0).color(0, 255, 255, 255).endVertex();
-        }
-
-        tessellator.draw();
+        return String.format("%.2f %s", value, suffixes[index]);
     }
 }
