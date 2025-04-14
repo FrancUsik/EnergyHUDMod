@@ -1,4 +1,3 @@
-
 package com.example.energyhud.client;
 
 import com.example.energyhud.network.ClientEnergyCache;
@@ -15,7 +14,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class HiTechHUDRenderer {
 
     private static final ResourceLocation HUD_TEXTURE = new ResourceLocation("energyhud", "textures/gui/hud_hitech.png");
-    private static final ResourceLocation FRAME_TEXTURE = new ResourceLocation("energyhud", "textures/gui/frame.png");
     private static final ResourceLocation ICON_ENERGY = new ResourceLocation("energyhud", "textures/gui/icon_energy.png");
     private static final ResourceLocation ICON_DELTA = new ResourceLocation("energyhud", "textures/gui/icon_delta.png");
 
@@ -26,6 +24,7 @@ public class HiTechHUDRenderer {
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
+
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.objectMouseOver == null || mc.objectMouseOver.getBlockPos() == null || mc.world == null) return;
 
@@ -50,19 +49,33 @@ public class HiTechHUDRenderer {
         int centerX = res.getScaledWidth() / 2;
         int topY = 10;
 
+        GlStateManager.enableBlend();
         GlStateManager.color(1f, 1f, 1f, 1f);
 
+        // --- HUD фон ---
         mc.getTextureManager().bindTexture(HUD_TEXTURE);
         mc.ingameGUI.drawTexturedModalRect(centerX - 128, topY, 0, 0, 256, 64);
 
-        mc.getTextureManager().bindTexture(ICON_ENERGY);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(centerX - 112, topY + 8, 0, 0, 16, 16, 64, 64);
+        // --- Иконки (отображаются как 16x16 из 64x64 PNG) ---
+        drawIcon(centerX - 120, topY + 5, ICON_ENERGY, 64, 64, 16, 16);
+        drawIcon(centerX - 120, topY + 25, ICON_DELTA, 64, 64, 16, 16);
 
-        mc.getTextureManager().bindTexture(ICON_DELTA);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(centerX - 112, topY + 28, 0, 0, 16, 16, 64, 64);
+        // --- Текст ---
+        String energyStr = formatNumber(energy) + " / " + formatNumber(max) + " RF";
+        String deltaStr = "0\": " + formatNumber(delta) + " RF/s";
+        int deltaColor = delta > 0 ? 0x55FF55 : delta < 0 ? 0xFF5555 : 0xFFFFAA00;
 
-        mc.fontRenderer.drawStringWithShadow("⚡ " + formatNumber(energy) + " / " + formatNumber(max), centerX - 90, topY + 10, 0x00FFFF);
-        mc.fontRenderer.drawStringWithShadow("Δ " + formatNumber(delta) + " RF/s", centerX - 90, topY + 30, delta >= 0 ? 0x55FF55 : 0xFF5555);
+        mc.fontRenderer.drawStringWithShadow(energyStr, centerX - 95, topY + 8, 0x00FFFF);
+        mc.fontRenderer.drawStringWithShadow(deltaStr, centerX - 95, topY + 28, deltaColor);
+
+        GlStateManager.disableBlend();
+    }
+
+    private void drawIcon(int x, int y, ResourceLocation texture, int texWidth, int texHeight, int drawWidth, int drawHeight) {
+        Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+        Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
+                x, y, 0, 0, drawWidth, drawHeight, texWidth, texHeight
+        );
     }
 
     private String formatNumber(double value) {
