@@ -51,39 +51,40 @@ public class HiTechHUDRenderer {
         int topY = 10;
         int leftX = centerX - 128;
 
-        // HUD background
+        // Draw HUD background
         mc.getTextureManager().bindTexture(HUD_BACKGROUND);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 128, 64, 128, 64);
 
-        // HUD frame overlay
+        // Draw HUD frame
         mc.getTextureManager().bindTexture(HUD_FRAME);
-        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
+        mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 128, 64, 128, 64);
 
-        // ENERGY ICON
-        drawIcon(ICON_ENERGY, leftX + 10, topY);
+        // Energy icon and text
+        drawIcon(ICON_ENERGY, leftX + 10, topY, 16, 64);
         mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 32, topY + 4, 0x00FFFF);
 
-        // DELTA ICON
-        drawIcon(ICON_DELTA, leftX + 10, topY + 24);
+        // Delta icon and text
+        drawIcon(ICON_DELTA, leftX + 10, topY + 24, 16, 64);
         String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
         int deltaColor = delta > 0 ? 0x55FF55 : 0xFF5555;
         mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 32, topY + 28, deltaColor);
     }
 
-    private void drawIcon(ResourceLocation texture, int x, int y) {
+    // Properly scale 64x64 icon down to 16x16
+    private void drawIcon(ResourceLocation texture, int x, int y, int drawSize, int textureSize) {
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         GlStateManager.color(1f, 1f, 1f, 1f);
         Minecraft.getMinecraft().ingameGUI.drawModalRectWithCustomSizedTexture(
                 x, y,
                 0, 0,
-                16, 16, // отображаем как 16x16
-                64, 64  // оригинальный размер текстуры
+                drawSize, drawSize,
+                textureSize, textureSize
         );
     }
 
     private String formatNumber(double value) {
-        String[] suffixes = {"", "k", "M", "G"};
+        String[] suffixes = {"", "k", "M", "G", "T"};
         int index = 0;
         while (value >= 1000 && index < suffixes.length - 1) {
             value /= 1000;
