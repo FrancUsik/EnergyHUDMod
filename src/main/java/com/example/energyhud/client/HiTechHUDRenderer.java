@@ -1,3 +1,4 @@
+
 package com.example.energyhud.client;
 
 import com.example.energyhud.network.ClientEnergyCache;
