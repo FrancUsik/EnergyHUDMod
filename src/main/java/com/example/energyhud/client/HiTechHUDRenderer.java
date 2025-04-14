@@ -62,11 +62,11 @@ public class HiTechHUDRenderer {
         mc.ingameGUI.drawModalRectWithCustomSizedTexture(leftX, topY - 10, 0, 0, 256, 128, 256, 128);
 
         // Energy Icon and Text
-        drawIcon(ICON_ENERGY, leftX + 10, topY, 16, 64);
+        drawIcon(ICON_ENERGY, leftX + 10, topY, 64, 64);
         mc.fontRenderer.drawStringWithShadow(formatNumber(energy) + " / " + formatNumber(max) + " RF", leftX + 30, topY + 4, 0x00FFFF);
 
         // Delta Icon and Text
-        drawIcon(ICON_DELTA, leftX + 10, topY + 24, 16, 64);
+        drawIcon(ICON_DELTA, leftX + 10, topY + 24, 64, 64);
         String deltaText = "Δ: " + formatNumber(delta) + " RF/s";
         mc.fontRenderer.drawStringWithShadow(deltaText, leftX + 30, topY + 28, delta > 0 ? 0x55FF55 : 0xFF5555);
     }
